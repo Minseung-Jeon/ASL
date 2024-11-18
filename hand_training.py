@@ -1,7 +1,13 @@
 #import tensorflow library
 import tensorflow as tf
+
+import matplotlib.pyplot as plt
+
 #imports ImageDataGenerator class from Keras
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.callbacks import EarlyStopping
+
+
 
 #creating ImageDataGenerator object
 train_datagen = ImageDataGenerator(
@@ -60,6 +66,8 @@ model = tf.keras.models.Sequential([
     tf.keras.layers.MaxPooling2D((2, 2)),
     tf.keras.layers.Conv2D(64, (3,3), activation = 'relu'),
     tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(64, (3,3), activation = 'relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
     # this layer converts the multi-dimensional data into a single, long vector
     tf.keras.layers.Flatten(),
 
@@ -75,13 +83,41 @@ model = tf.keras.models.Sequential([
 #specifies the metric used to evaluate the mode's performance during training
 model.compile(optimizer = 'adam', loss = 'categorical_crossentropy', metrics = ['accuracy'])
 
+#early stopping technique to prevent overfitting
+early_stopping = EarlyStopping(
+    monitor = "val_loss",
+    #if validation loss does not improve for 3 epochs, training will stop
+    patience = 3,
+    #ensure model's weights are restored from the epoch with the best validation loss
+    restore_best_weights = True,
+)
+
 #initializes training of the model (actual learning happens)
 #train generator is the data generator created earlier
 #model goes through the training data 20 times
 model.fit(
     train_generator,
     epochs=15,
-    validation_data = validation_generator
+    validation_data = validation_generator,
+    callbacks=[early_stopping],
 )
 
 model.save('asl_model.h5')
+
+#plot the training and validation accuracy
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('Model accuracy')
+plt.xlabel("Accuracy")
+plt.ylabel('Epoch')
+plt.legend(['Train', 'Validation'], loc = 'upper left')
+plt.show()
+
+#plot the training and validation loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title("Model Loss")
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Validation'], loc = 'upper left')
+plt.show()

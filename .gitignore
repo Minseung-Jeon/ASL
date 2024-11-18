@@ -1,3 +1,4 @@
 *.pdf
 archive/
 .venv/
+hand_training.py
